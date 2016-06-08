@@ -65,7 +65,7 @@
           from_date: params.fromDate,
           to_date:   params.toDate
         })
-        .groupBy([params.groupKeys], mixpanel.reducer.count()) //pass in keys from uploaded file
+        .groupBy(params.groupKeys, mixpanel.reducer.count()) //pass in keys from uploaded file
         .map(function(event) {
           eventForChart = {};
           eventForChart[event.key[0]] = event.value;
