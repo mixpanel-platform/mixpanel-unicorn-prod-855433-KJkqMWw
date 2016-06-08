@@ -25,13 +25,15 @@
         }
       );
       var runQuery = function() {
-        $.get( "https://cdn.rawgit.com/mp-christine/a99403548cf214c176eca13fc31b93cc/raw/0ea2291863f3f18a8192243c0c747e4f865865ee/distinct_id.json", function( data ) {
+        //get groupBy keys from uploaded file
+        $.get( "https://cdn.rawgit.com/mp-christine/53b73ebe1a5e939b7e260379a9279066/raw/dba38c1e901d74db3caf4c4ae51669c9006923b9/groupKeys.json", function( data ) {
           console.log(data);
           dateRange = dateSelect.MPDatepicker('value');
           //create parameter object to pass to JQL query
           var queryParams = {
             fromDate: dateRange.from.toISOString().split('T')[0],
             toDate: dateRange.to.toISOString().split('T')[0],
+            groupKeys: data.keys
           };
           
           //get JQL script below
@@ -63,7 +65,7 @@
           from_date: params.fromDate,
           to_date:   params.toDate
         })
-        .groupBy(["name"], mixpanel.reducer.count())
+        .groupBy([params.groupKeys], mixpanel.reducer.count()) //pass in keys from uploaded file
         .map(function(event) {
           eventForChart = {};
           eventForChart[event.key[0]] = event.value;
