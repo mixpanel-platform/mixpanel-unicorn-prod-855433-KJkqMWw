@@ -7,9 +7,70 @@
     <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
   </head>
   <body class="mixpanel-platform-body">
-    <h1>Hello, World!</h1>
+    <div class="mixpanel-platform-section">
+      <div id="dateSelect" style="float: left;"></div>
+      <div style="clear: both;"></div>
+    </div>
+    <div id="chart"></div>
     <script>
-      // Run queries and display results here
+      var dateSelect  = $('#dateSelect').MPDatepicker();
+      //create chart template
+      var eventChart  = $('#chart').MPChart(
+        {
+          chartType: 'pie', highchartsOptions: {
+            tooltip: {
+              backgroundColor: '#fffce7'  // Make tooltip background yellow
+            }
+          }
+        }
+      );
+      var runQuery = function() {
+        $.get( "https://cdn.rawgit.com/mp-christine/a99403548cf214c176eca13fc31b93cc/raw/0ea2291863f3f18a8192243c0c747e4f865865ee/distinct_id.json", function( data ) {
+          console.log(data);
+          dateRange = dateSelect.MPDatepicker('value');
+          //create parameter object to pass to JQL query
+          var queryParams = {
+            fromDate: dateRange.from.toISOString().split('T')[0],
+            toDate: dateRange.to.toISOString().split('T')[0],
+          };
+          
+          //get JQL script below
+          var script = $('#jql').html();
+          script = $.trim(script);
+          
+          //make JQL API call
+          MP.api.jql(script, queryParams)
+          .done(function(resp) {
+            //set chart data
+            eventChart.MPChart('setData', resp[0]);
+          }).fail(function($xhr) {
+              var error = $xhr.request.responseText;
+              var error_text = "Requst failed";
+              try {
+                  error_text = JSON.parse(error).error;
+              } catch (err) {
+                  error_text = $xhr.request.responseText;
+              }
+          });
+        });
+      };
+      dateSelect.on('change', runQuery);
+    </script>
+    <!-- put JQL code here-->
+    <script type="text/cq" id="jql">
+      function main() {
+        return Events({
+          from_date: params.fromDate,
+          to_date:   params.toDate
+        })
+        .groupBy(["name"], mixpanel.reducer.count())
+        .map(function(event) {
+          eventForChart = {};
+          eventForChart[event.key[0]] = event.value;
+          return eventForChart;
+        })
+        .reduce(mixpanel.reducer.object_merge()); //flatten object to use in charts
+      }
     </script>
   </body>
 </html>
